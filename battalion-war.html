@@ -1,0 +1,1039 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1, maximum-scale=1" />
+  <title>Battalion War</title>
+  <link rel="preconnect" href="https://fonts.googleapis.com" />
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+  <link href="https://fonts.googleapis.com/css2?family=Cinzel:wght@500;700;900&family=Source+Sans+3:wght@400;600;700&display=swap" rel="stylesheet" />
+  <style>
+    :root {
+      --felt: #163528;
+      --felt-dark: #0c1f18;
+      --gold: #d4b04a;
+      --gold-dim: #8a7028;
+      --cream: #f3ead2;
+      --ink: #1a140c;
+      --red: #c0392b;
+      --p1: #5b9fd4;
+      --p2: #e07a5f;
+      --slot: rgba(255,255,255,0.06);
+    }
+    * { box-sizing: border-box; margin: 0; padding: 0; }
+    html, body { height: 100%; }
+    body {
+      font-family: "Source Sans 3", system-ui, sans-serif;
+      background:
+        radial-gradient(ellipse at top, #1e4a36 0%, var(--felt-dark) 55%),
+        var(--felt-dark);
+      color: var(--cream);
+      min-height: 100%;
+    }
+    h1, h2, .brand { font-family: Cinzel, serif; }
+
+    button {
+      font-family: inherit;
+      cursor: pointer;
+      border: none;
+    }
+    button:disabled { opacity: 0.4; cursor: not-allowed; }
+
+    .screen { display: none; min-height: 100%; }
+    .screen.active { display: block; }
+
+    /* ===== MENU ===== */
+    #menu {
+      display: none;
+      min-height: 100%;
+      align-items: center;
+      justify-content: center;
+      padding: 32px 20px;
+    }
+    #menu.active { display: flex; }
+    .menu-card {
+      width: min(640px, 100%);
+      background: linear-gradient(180deg, rgba(22,53,40,0.92), rgba(10,24,18,0.96));
+      border: 1px solid rgba(212,176,74,0.35);
+      box-shadow: 0 24px 80px rgba(0,0,0,0.45);
+      padding: 40px 36px 32px;
+      text-align: center;
+    }
+    .eyebrow {
+      letter-spacing: 0.28em;
+      font-size: 11px;
+      color: var(--gold);
+      text-transform: uppercase;
+      margin-bottom: 10px;
+    }
+    .menu-card h1 {
+      font-size: clamp(34px, 6vw, 52px);
+      font-weight: 900;
+      line-height: 1;
+      color: var(--cream);
+    }
+    .menu-card .sub {
+      margin: 14px auto 28px;
+      max-width: 46ch;
+      color: rgba(243,234,210,0.78);
+      line-height: 1.5;
+    }
+    .menu-actions { display: grid; gap: 10px; }
+    .btn {
+      background: linear-gradient(180deg, #e8c768, #b8902c);
+      color: var(--ink);
+      font-weight: 700;
+      letter-spacing: 0.04em;
+      padding: 12px 18px;
+      border-radius: 2px;
+      font-size: 15px;
+    }
+    .btn:hover:not(:disabled) { filter: brightness(1.06); }
+    .btn.ghost {
+      background: transparent;
+      color: var(--cream);
+      border: 1px solid rgba(243,234,210,0.25);
+    }
+    .btn.small { padding: 8px 12px; font-size: 13px; }
+    .rules-box {
+      text-align: left;
+      margin-top: 22px;
+      padding-top: 18px;
+      border-top: 1px solid rgba(212,176,74,0.2);
+      font-size: 14px;
+      line-height: 1.55;
+      color: rgba(243,234,210,0.82);
+    }
+    .rules-box h3 { font-family: Cinzel, serif; color: var(--gold); font-size: 14px; margin-bottom: 8px; }
+    .rules-box ol { padding-left: 18px; }
+    .rules-box li { margin: 4px 0; }
+
+    /* ===== SETUP ===== */
+    #setup header, #play header, #over header {
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      gap: 12px;
+      padding: 14px 18px 10px;
+      border-bottom: 1px solid rgba(212,176,74,0.18);
+    }
+    .brand { font-size: 18px; font-weight: 700; color: var(--gold); }
+    .setup-hint { font-size: 14px; color: rgba(243,234,210,0.8); }
+    .setup-hint strong { color: var(--gold); }
+    .toolbar { display: flex; flex-wrap: wrap; gap: 8px; padding: 12px 18px; }
+    .waves {
+      display: grid;
+      grid-template-columns: 1fr 1fr;
+      gap: 6px;
+      padding: 0 18px 8px;
+    }
+    @media (max-width: 720px) {
+      .waves { grid-template-columns: 1fr; }
+    }
+    .wave {
+      background: rgba(0,0,0,0.18);
+      border: 1px solid rgba(255,255,255,0.06);
+      padding: 6px 10px 8px;
+    }
+    .wave-head {
+      display: flex;
+      justify-content: space-between;
+      font-size: 12px;
+      letter-spacing: 0.12em;
+      text-transform: uppercase;
+      color: var(--gold);
+      margin-bottom: 6px;
+    }
+    .wave-slots {
+      display: grid;
+      grid-template-columns: repeat(4, minmax(0, 1fr));
+      gap: 6px;
+    }
+    .slot {
+      background: var(--slot);
+      border: 1px dashed rgba(255,255,255,0.12);
+      border-radius: 3px;
+      height: 72px;
+      position: relative;
+    }
+    .slot.can-drop { border-color: var(--gold); background: rgba(212,176,74,0.12); }
+    .tray-wrap { padding: 8px 18px 24px; }
+    .tray-label {
+      font-size: 12px;
+      letter-spacing: 0.14em;
+      text-transform: uppercase;
+      color: var(--gold-dim);
+      margin-bottom: 8px;
+    }
+    .tray {
+      display: flex;
+      flex-wrap: wrap;
+      gap: 5px;
+      min-height: 70px;
+    }
+
+    /* cards */
+    .card {
+      width: 100%;
+      height: 100%;
+      border-radius: 4px;
+      background: #fbfaf6;
+      color: #1b1b1b;
+      position: relative;
+      user-select: none;
+      box-shadow: 0 2px 6px rgba(0,0,0,0.35);
+      font-family: Cinzel, serif;
+      cursor: pointer;
+    }
+    .card.red { color: #b42318; }
+    .card.selected {
+      outline: 2px solid var(--gold);
+      outline-offset: 1px;
+      transform: translateY(-3px);
+    }
+    .card .r {
+      position: absolute;
+      top: 3px; left: 4px;
+      font-size: 11px;
+      font-weight: 700;
+      line-height: 1.05;
+      text-align: center;
+    }
+    .card .r .s { display: block; font-size: 10px; }
+    .card .pip {
+      position: absolute;
+      inset: 0;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      font-size: 16px;
+    }
+    .card.back {
+      background:
+        repeating-linear-gradient(45deg, #2a1a3a 0 6px, #3d2456 6px 12px);
+      border: 2px solid #c9a227;
+      cursor: default;
+    }
+    .card.back::after {
+      content: "⚔";
+      position: absolute;
+      inset: 0;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      color: var(--gold);
+      font-size: 16px;
+    }
+    .tray .mini, .wave .mini {
+      width: 42px;
+      height: 60px;
+      flex: 0 0 auto;
+    }
+    .tray .card, .slot .card { width: 100%; height: 100%; }
+    @media (max-width: 900px) {
+      .wave-slots { gap: 3px; }
+      .card .r { font-size: 9px; }
+      .card .pip { font-size: 12px; }
+      .slot { height: 46px; max-height: 46px; }
+    }
+
+    /* ===== PLAY ===== */
+    #play .board {
+      display: grid;
+      grid-template-columns: 1fr minmax(280px, 420px) 1fr;
+      gap: 12px;
+      padding: 16px 18px 8px;
+      align-items: start;
+    }
+    .side {
+      background: rgba(0,0,0,0.2);
+      border: 1px solid rgba(255,255,255,0.06);
+      padding: 12px;
+      min-height: 280px;
+    }
+    .side h2 { font-size: 16px; margin-bottom: 4px; }
+    .side.p1 h2 { color: var(--p1); }
+    .side.p2 h2 { color: var(--p2); }
+    .stat { font-size: 13px; opacity: 0.85; margin-bottom: 10px; }
+    .wave-pips { display: flex; flex-wrap: wrap; gap: 4px; margin-bottom: 12px; }
+    .wave-pip {
+      flex: 0 0 calc(20% - 4px);
+      text-align: center;
+      font-size: 10px;
+      padding: 4px 0;
+      background: rgba(255,255,255,0.05);
+      border: 1px solid rgba(255,255,255,0.08);
+    }
+    .wave-pip.on { border-color: var(--gold); color: var(--gold); background: rgba(212,176,74,0.12); }
+    .wave-pip.empty { opacity: 0.35; }
+    .peek {
+      display: flex;
+      flex-wrap: wrap;
+      gap: 3px;
+    }
+    .peek .card { width: 28px; height: 40px; }
+    .peek .card .r { font-size: 8px; top: 1px; left: 2px; }
+    .peek .card .pip { font-size: 10px; }
+    .battlefield {
+      text-align: center;
+      padding: 16px 10px;
+      background: radial-gradient(circle at center, rgba(212,176,74,0.08), transparent 70%);
+      min-height: 280px;
+    }
+    .vs-row {
+      display: flex;
+      justify-content: center;
+      align-items: center;
+      gap: 18px;
+      min-height: 150px;
+    }
+    .battle-card { width: 92px; height: 132px; }
+    .battle-card .card { width: 92px; height: 132px; }
+    .battle-card .card .r { font-size: 16px; top: 6px; left: 7px; }
+    .battle-card .card .r .s { font-size: 14px; }
+    .battle-card .card .pip { font-size: 36px; }
+    .vs { font-family: Cinzel, serif; color: var(--gold); font-size: 20px; }
+    .pot-row {
+      display: flex;
+      flex-wrap: wrap;
+      justify-content: center;
+      gap: 4px;
+      min-height: 48px;
+      margin-top: 10px;
+    }
+    .pot-row .card { width: 28px; height: 40px; }
+    .status {
+      margin-top: 12px;
+      min-height: 44px;
+      font-size: 15px;
+      color: var(--gold);
+      font-family: Cinzel, serif;
+    }
+    .play-controls {
+      display: flex;
+      flex-wrap: wrap;
+      gap: 8px;
+      justify-content: center;
+      padding: 8px 18px 16px;
+    }
+    .log {
+      max-height: 160px;
+      overflow: auto;
+      margin: 0 18px 20px;
+      padding: 10px 12px;
+      background: rgba(0,0,0,0.28);
+      font-size: 13px;
+      line-height: 1.45;
+      color: rgba(243,234,210,0.75);
+    }
+    .log div { border-bottom: 1px solid rgba(255,255,255,0.04); padding: 3px 0; }
+
+    #over .result {
+      max-width: 560px;
+      margin: 48px auto;
+      text-align: center;
+      padding: 0 20px;
+    }
+    #over .result h1 { font-size: 42px; margin: 10px 0; }
+    #over .scoreline { font-size: 22px; margin: 12px 0 24px; }
+
+    @media (max-width: 820px) {
+      #play .board { grid-template-columns: 1fr; }
+    }
+  </style>
+</head>
+<body>
+  <section id="menu" class="screen active">
+    <div class="menu-card">
+      <div class="eyebrow">A game of prepared war</div>
+      <h1>Battalion War</h1>
+      <p class="sub">Two decks. Thirteen waves of four. You set the order — then the cards fight like War. Highest rank wins. Ties declare war.</p>
+      <div class="menu-actions">
+        <button class="btn" onclick="startGame('ai')">Play vs Commander (AI)</button>
+        <button class="btn ghost" onclick="startGame('hotseat')">Two players, one table</button>
+        <button class="btn ghost" onclick="startGame('watch')">Watch two commanders</button>
+      </div>
+      <div class="rules-box">
+        <h3>Rules</h3>
+        <ol>
+          <li>Each player receives a full 52-card deck and secretly orders it into 13 waves of 4.</li>
+          <li>Play starts at Wave 1. When a wave is spent, the next wave continues the queue.</li>
+          <li>Higher rank wins both cards into a capture pile (A high, 2 low, suits ignored).</li>
+          <li>On a tie: each plays 3 face-down and 1 face-up. The face-up card takes the whole pot. Another tie stacks another war.</li>
+          <li>If too few cards remain for a full war, play whatever is left; the last card is the decider. A last-card tie: each keeps their own card.</li>
+          <li>When both queues are empty, the player with more captured cards wins.</li>
+        </ol>
+      </div>
+    </div>
+  </section>
+
+  <section id="setup" class="screen">
+    <header>
+      <div class="brand">Battalion War</div>
+      <div class="setup-hint" id="setupHint">Arrange your thirteen waves.</div>
+      <button class="btn ghost small" onclick="toMenu()">Menu</button>
+    </header>
+    <div class="toolbar">
+      <button class="btn small" onclick="autoFill('random')">Random fill</button>
+      <button class="btn small" onclick="autoFill('highlow')">High → low</button>
+      <button class="btn small" onclick="autoFill('war')">War pattern</button>
+      <button class="btn small ghost" onclick="clearWaves()">Clear</button>
+      <button class="btn small" id="confirmBtn" disabled onclick="confirmSetup()">Confirm waves</button>
+    </div>
+    <div class="waves" id="waveBoard"></div>
+    <div class="tray-wrap">
+      <div class="tray-label">Reserves — click a card, then a slot (or another card to swap)</div>
+      <div class="tray" id="tray"></div>
+    </div>
+  </section>
+
+  <section id="play" class="screen">
+    <header>
+      <div class="brand">Battalion War</div>
+      <div class="setup-hint" id="playHint">Battle</div>
+      <button class="btn ghost small" onclick="toMenu()">Menu</button>
+    </header>
+    <div class="board">
+      <div class="side p1">
+        <h2 id="p1Name">You</h2>
+        <div class="stat" id="p1Stats"></div>
+        <div class="wave-pips" id="p1Pips"></div>
+        <div class="tray-label" id="p1PeekLabel">Your remaining order</div>
+        <div class="peek" id="p1Peek"></div>
+      </div>
+      <div class="battlefield">
+        <div class="vs-row">
+          <div class="battle-card" id="leftCard"></div>
+          <div class="vs">VS</div>
+          <div class="battle-card" id="rightCard"></div>
+        </div>
+        <div class="pot-row" id="potRow"></div>
+        <div class="status" id="status"></div>
+      </div>
+      <div class="side p2">
+        <h2 id="p2Name">Commander</h2>
+        <div class="stat" id="p2Stats"></div>
+        <div class="wave-pips" id="p2Pips"></div>
+        <div class="tray-label">Opponent remaining (hidden)</div>
+        <div class="peek" id="p2Peek"></div>
+      </div>
+    </div>
+    <div class="play-controls">
+      <button class="btn" id="nextBtn" onclick="stepBattle()">Next battle</button>
+      <button class="btn ghost" id="autoBtn" onclick="toggleAuto()">Play all</button>
+      <label class="setup-hint" style="display:flex;align-items:center;gap:8px;">
+        Speed
+        <input type="range" min="120" max="1400" value="700" oninput="state.speed = +this.value" />
+      </label>
+    </div>
+    <div class="log" id="log"></div>
+  </section>
+
+  <section id="over" class="screen">
+    <header>
+      <div class="brand">Battalion War</div>
+      <button class="btn ghost small" onclick="toMenu()">Menu</button>
+    </header>
+    <div class="result">
+      <div class="eyebrow">Campaign complete</div>
+      <h1 id="winnerTitle">Victory</h1>
+      <div class="scoreline" id="finalScore"></div>
+      <div class="menu-actions" style="max-width:320px;margin:0 auto;">
+        <button class="btn" onclick="rematch()">Rematch</button>
+        <button class="btn ghost" onclick="toMenu()">Main menu</button>
+      </div>
+    </div>
+  </section>
+
+<script>
+const WAVES = 13;
+const WAVE_SIZE = 4;
+
+const SUITS = [
+  { id: "s", glyph: "♠", red: false },
+  { id: "h", glyph: "♥", red: true },
+  { id: "d", glyph: "♦", red: true },
+  { id: "c", glyph: "♣", red: false },
+];
+const RANKS = [
+  { v: 14, label: "A" }, { v: 13, label: "K" }, { v: 12, label: "Q" },
+  { v: 11, label: "J" }, { v: 10, label: "10" }, { v: 9, label: "9" },
+  { v: 8, label: "8" }, { v: 7, label: "7" }, { v: 6, label: "6" },
+  { v: 5, label: "5" }, { v: 4, label: "4" }, { v: 3, label: "3" }, { v: 2, label: "2" },
+];
+
+let uid = 1;
+const state = {
+  mode: "ai",
+  setupPlayer: 0,
+  selected: null, // {from:'tray'|'wave', index, wave, card}
+  players: [],
+  pot: [],
+  speed: 700,
+  auto: false,
+  busy: false,
+  lastMode: "ai",
+};
+
+function makeDeck(owner) {
+  const cards = [];
+  for (const s of SUITS) {
+    for (const r of RANKS) {
+      cards.push({
+        id: uid++,
+        owner,
+        rank: r.v,
+        label: r.label,
+        suit: s.id,
+        glyph: s.glyph,
+        red: s.red,
+      });
+    }
+  }
+  return cards;
+}
+
+function shuffle(arr) {
+  const a = arr.slice();
+  for (let i = a.length - 1; i > 0; i--) {
+    const j = Math.floor(Math.random() * (i + 1));
+    [a[i], a[j]] = [a[j], a[i]];
+  }
+  return a;
+}
+
+function emptyWaves() { return Array.from({ length: WAVES }, () => []); }
+
+function show(id) {
+  document.querySelectorAll(".screen").forEach((s) => s.classList.remove("active"));
+  document.getElementById(id).classList.add("active");
+}
+
+function toMenu() {
+  state.auto = false;
+  state.busy = false;
+  show("menu");
+}
+
+function startGame(mode) {
+  state.mode = mode;
+  state.lastMode = mode;
+  state.setupPlayer = 0;
+  state.selected = null;
+  state.players = [
+    { name: mode === "watch" ? "North" : "You", waves: emptyWaves(), tray: makeDeck(0), queue: [], capture: [], waveIndex: 0 },
+    { name: mode === "hotseat" ? "Player 2" : mode === "watch" ? "South" : "Commander", waves: emptyWaves(), tray: makeDeck(1), queue: [], capture: [], waveIndex: 0 },
+  ];
+  if (mode === "watch") {
+    autoArrange(0, "war");
+    autoArrange(1, Math.random() < 0.5 ? "war" : "highlow");
+    beginPlay();
+    return;
+  }
+  enterSetup();
+}
+
+function enterSetup() {
+  const p = state.players[state.setupPlayer];
+  document.getElementById("setupHint").innerHTML =
+    `<strong>${escapeHtml(p.name)}</strong> — place ${WAVE_SIZE} cards in each of ${WAVES} waves. Opponent cannot see this.`;
+  document.getElementById("confirmBtn").disabled = true;
+  state.selected = null;
+  renderSetup();
+  show("setup");
+}
+
+function renderSetup() {
+  const p = state.players[state.setupPlayer];
+  const board = document.getElementById("waveBoard");
+  board.innerHTML = "";
+  p.waves.forEach((wave, wi) => {
+    const row = document.createElement("div");
+    row.className = "wave";
+    row.innerHTML = `<div class="wave-head"><span>Wave ${wi + 1}</span><span>${wave.filter(Boolean).length} / ${WAVE_SIZE}</span></div>`;
+    const slots = document.createElement("div");
+    slots.className = "wave-slots";
+    for (let i = 0; i < WAVE_SIZE; i++) {
+      const slot = document.createElement("div");
+      slot.className = "slot";
+      slot.dataset.wave = wi;
+      slot.dataset.slot = i;
+      const card = wave[i];
+      if (card) slot.appendChild(cardEl(card, true));
+      slot.addEventListener("click", (e) => onSlotClick(wi, i, e));
+      slots.appendChild(slot);
+    }
+    row.appendChild(slots);
+    board.appendChild(row);
+  });
+
+  const tray = document.getElementById("tray");
+  tray.innerHTML = "";
+  p.tray.forEach((card, i) => {
+    const wrap = document.createElement("div");
+    wrap.className = "mini";
+    wrap.style.width = "42px";
+    wrap.style.height = "60px";
+    const el = cardEl(card, true);
+    el.addEventListener("click", (e) => {
+      e.stopPropagation();
+      onTrayClick(i);
+    });
+    wrap.appendChild(el);
+    tray.appendChild(wrap);
+  });
+
+  highlightSelected();
+  const ready = p.waves.every((w) => w.filter(Boolean).length === WAVE_SIZE) && p.tray.length === 0;
+  document.getElementById("confirmBtn").disabled = !ready;
+}
+
+function cardEl(card, compact) {
+  const d = document.createElement("div");
+  d.className = "card" + (card.red ? " red" : "");
+  d.dataset.id = card.id;
+  d.innerHTML = `<div class="r">${card.label}<span class="s">${card.glyph}</span></div><div class="pip">${card.glyph}</div>`;
+  return d;
+}
+
+function backEl() {
+  const d = document.createElement("div");
+  d.className = "card back";
+  return d;
+}
+
+function highlightSelected() {
+  document.querySelectorAll(".card.selected").forEach((c) => c.classList.remove("selected"));
+  if (!state.selected) return;
+  const id = String(state.selected.card.id);
+  document.querySelectorAll(`.card[data-id="${id}"]`).forEach((c) => c.classList.add("selected"));
+}
+
+function onTrayClick(index) {
+  const p = state.players[state.setupPlayer];
+  const card = p.tray[index];
+  if (state.selected && state.selected.from === "wave") {
+    // move selected wave card back to tray (insert at click? just select tray instead)
+    state.selected = { from: "tray", index, card };
+    highlightSelected();
+    return;
+  }
+  if (state.selected && state.selected.from === "tray" && state.selected.index === index) {
+    state.selected = null;
+    highlightSelected();
+    return;
+  }
+  state.selected = { from: "tray", index, card };
+  highlightSelected();
+}
+
+function onSlotClick(wi, si, e) {
+  e.stopPropagation();
+  const p = state.players[state.setupPlayer];
+  const existing = p.waves[wi][si];
+
+  if (!state.selected) {
+    if (existing) {
+      state.selected = { from: "wave", wave: wi, index: si, card: existing };
+      highlightSelected();
+    }
+    return;
+  }
+
+  if (state.selected.from === "tray") {
+    const card = p.tray.splice(state.selected.index, 1)[0];
+    if (existing) p.tray.push(existing);
+    p.waves[wi][si] = card;
+    state.selected = existing ? { from: "tray", index: p.tray.length - 1, card: existing } : null;
+    renderSetup();
+    return;
+  }
+
+  if (state.selected.from === "wave") {
+    const { wave, index } = state.selected;
+    if (wave === wi && index === si) {
+      // return to tray
+      p.tray.push(p.waves[wi][si]);
+      p.waves[wi][si] = undefined;
+      state.selected = null;
+      renderSetup();
+      return;
+    }
+    const a = p.waves[wave][index];
+    p.waves[wave][index] = existing;
+    p.waves[wi][si] = a;
+    state.selected = null;
+    renderSetup();
+  }
+}
+
+function clearWaves() {
+  const p = state.players[state.setupPlayer];
+  for (const wave of p.waves) {
+    for (const c of wave) if (c) p.tray.push(c);
+  }
+  p.waves = emptyWaves();
+  state.selected = null;
+  renderSetup();
+}
+
+function autoFill(kind) {
+  const p = state.players[state.setupPlayer];
+  const all = [];
+  p.waves.forEach((w) => w.forEach((c) => { if (c) all.push(c); }));
+  all.push(...p.tray);
+  p.tray = [];
+  p.waves = arrangeCards(all, kind);
+  state.selected = null;
+  renderSetup();
+}
+
+function arrangeCards(cards, kind) {
+  let ordered;
+  if (kind === "random") ordered = shuffle(cards);
+  else if (kind === "highlow") ordered = cards.slice().sort((a, b) => b.rank - a.rank || a.suit.localeCompare(b.suit));
+  else ordered = warPattern(cards);
+  const waves = emptyWaves();
+  for (let i = 0; i < 52; i++) waves[Math.floor(i / WAVE_SIZE)][i % WAVE_SIZE] = ordered[i];
+  return waves;
+}
+
+function warPattern(cards) {
+  // Spread strength across waves. Bias every 4th card toward a high decider.
+  const byRank = {};
+  cards.forEach((c) => {
+    (byRank[c.rank] || (byRank[c.rank] = [])).push(c);
+  });
+  const highs = []; const mids = []; const lows = [];
+  cards.forEach((c) => {
+    if (c.rank >= 12) highs.push(c);
+    else if (c.rank >= 8) mids.push(c);
+    else lows.push(c);
+  });
+  const H = shuffle(highs), M = shuffle(mids), L = shuffle(lows);
+  const seq = [];
+  const take = (arr) => arr.length ? arr.pop() : null;
+  // Each wave is 4 cards — the exact size of a war (3 down + 1 decider).
+  const templates = [
+    ["L","M","L","H"], ["M","L","H","L"], ["L","H","M","L"], ["H","L","M","L"],
+    ["L","L","M","H"], ["M","H","L","M"], ["L","M","H","L"], ["M","L","L","H"],
+    ["H","M","L","L"], ["L","H","L","M"], ["M","L","H","M"], ["L","M","L","H"],
+    ["H","L","M","H"],
+  ];
+  for (let w = 0; w < WAVES; w++) {
+    for (const t of templates[w]) {
+      let c = t === "H" ? take(H) : t === "M" ? take(M) : take(L);
+      if (!c) c = take(H) || take(M) || take(L);
+      seq.push(c);
+    }
+  }
+  return seq.filter(Boolean);
+}
+
+function autoArrange(pi, kind) {
+  const p = state.players[pi];
+  const all = p.tray.concat(p.waves.flat().filter(Boolean));
+  p.tray = [];
+  p.waves = arrangeCards(all, kind);
+}
+
+function confirmSetup() {
+  const p = state.players[state.setupPlayer];
+  if (!p.waves.every((w) => w.filter(Boolean).length === WAVE_SIZE)) return;
+
+  if (state.mode === "hotseat" && state.setupPlayer === 0) {
+    state.setupPlayer = 1;
+    enterSetup();
+    return;
+  }
+  if (state.mode === "ai") {
+    const kinds = ["war", "war", "highlow", "random"];
+    autoArrange(1, kinds[Math.floor(Math.random() * kinds.length)]);
+  }
+  beginPlay();
+}
+
+function flattenWaves(p) {
+  p.queue = p.waves.map((w) => w.filter(Boolean));
+  p.waveIndex = 0;
+  p.capture = [];
+}
+
+function beginPlay() {
+  flattenWaves(state.players[0]);
+  flattenWaves(state.players[1]);
+  state.pot = [];
+  state.auto = false;
+  state.busy = false;
+  document.getElementById("p1Name").textContent = state.players[0].name;
+  document.getElementById("p2Name").textContent = state.players[1].name;
+  document.getElementById("log").innerHTML = "";
+  document.getElementById("status").textContent = "Armies are in position. Begin.";
+  document.getElementById("leftCard").innerHTML = "";
+  document.getElementById("rightCard").innerHTML = "";
+  document.getElementById("potRow").innerHTML = "";
+  document.getElementById("nextBtn").disabled = false;
+  document.getElementById("autoBtn").textContent = "Play all";
+  renderPlay();
+  show("play");
+  logLine("The thirteen waves face each other.");
+}
+
+function remaining(p) {
+  return p.queue.slice(p.waveIndex).reduce((n, w) => n + w.length, 0);
+}
+
+function currentWave(p) {
+  while (p.waveIndex < WAVES && p.queue[p.waveIndex].length === 0) p.waveIndex++;
+  return p.waveIndex < WAVES ? p.waveIndex : WAVES - 1;
+}
+
+function drawCard(p) {
+  while (p.waveIndex < WAVES && p.queue[p.waveIndex].length === 0) p.waveIndex++;
+  if (p.waveIndex >= WAVES) return null;
+  return p.queue[p.waveIndex].shift();
+}
+
+function renderPlay() {
+  const [a, b] = state.players;
+  document.getElementById("p1Stats").textContent =
+    `Captured ${a.capture.length} · Queue ${remaining(a)} · Wave ${Math.min(currentWave(a) + 1, WAVES)}`;
+  document.getElementById("p2Stats").textContent =
+    `Captured ${b.capture.length} · Queue ${remaining(b)} · Wave ${Math.min(currentWave(b) + 1, WAVES)}`;
+
+  renderPips("p1Pips", a);
+  renderPips("p2Pips", b);
+
+  const peek1 = document.getElementById("p1Peek");
+  peek1.innerHTML = "";
+  const showPeek = state.mode !== "watch";
+  document.getElementById("p1PeekLabel").textContent = showPeek ? "Your remaining order" : "North remaining (hidden)";
+  const upcoming1 = a.queue.slice(a.waveIndex).flat();
+  if (showPeek) {
+    upcoming1.slice(0, 26).forEach((c) => peek1.appendChild(cardEl(c)));
+    if (upcoming1.length > 26) {
+      const more = document.createElement("div");
+      more.style.opacity = ".6";
+      more.style.fontSize = "12px";
+      more.textContent = `+${upcoming1.length - 26}`;
+      peek1.appendChild(more);
+    }
+  } else {
+    upcoming1.slice(0, 16).forEach(() => peek1.appendChild(backEl()));
+  }
+
+  const peek2 = document.getElementById("p2Peek");
+  peek2.innerHTML = "";
+  const upcoming2 = b.queue.slice(b.waveIndex).flat();
+  const revealOpp = false;
+  upcoming2.slice(0, 16).forEach(() => peek2.appendChild(backEl()));
+}
+
+function renderPips(id, p) {
+  const el = document.getElementById(id);
+  el.innerHTML = "";
+  for (let i = 0; i < WAVES; i++) {
+    const d = document.createElement("div");
+    const n = p.queue[i] ? p.queue[i].length : 0;
+    d.className = "wave-pip" + (i === currentWave(p) && remaining(p) ? " on" : "") + (n === 0 ? " empty" : "");
+    d.textContent = n === 0 && i < p.waveIndex ? "—" : `W${i + 1} · ${n}`;
+    el.appendChild(d);
+  }
+}
+
+function logLine(text) {
+  const log = document.getElementById("log");
+  const d = document.createElement("div");
+  d.textContent = text;
+  log.prepend(d);
+}
+
+function setBattleCards(c1, c2, faceDown) {
+  const L = document.getElementById("leftCard");
+  const R = document.getElementById("rightCard");
+  L.innerHTML = "";
+  R.innerHTML = "";
+  if (c1) L.appendChild(faceDown ? backEl() : cardEl(c1));
+  if (c2) R.appendChild(faceDown ? backEl() : cardEl(c2));
+}
+
+function renderPot(extra) {
+  const row = document.getElementById("potRow");
+  row.innerHTML = "";
+  state.pot.forEach((c, i) => {
+    if (extra && extra.hidden.has(i)) row.appendChild(backEl());
+    else row.appendChild(cardEl(c));
+  });
+}
+
+function sleep(ms) {
+  return new Promise((r) => setTimeout(r, ms));
+}
+
+async function stepBattle() {
+  if (state.busy) return;
+  if (remaining(state.players[0]) === 0 && remaining(state.players[1]) === 0) {
+    finishGame();
+    return;
+  }
+  state.busy = true;
+  document.getElementById("nextBtn").disabled = true;
+
+  const c1 = drawCard(state.players[0]);
+  const c2 = drawCard(state.players[1]);
+
+  if (!c1 && !c2) {
+    finishGame();
+    return;
+  }
+  if (!c1 || !c2) {
+    // Should not happen often; leftover goes to the player who still has a card.
+    if (c1) state.players[0].capture.push(c1);
+    if (c2) state.players[1].capture.push(c2);
+    logLine("Uneven last card collected.");
+    renderPlay();
+    state.busy = false;
+    document.getElementById("nextBtn").disabled = false;
+    if (state.auto) return stepBattle();
+    return;
+  }
+
+  state.pot = [c1, c2];
+  setBattleCards(c1, c2, false);
+  renderPot();
+  document.getElementById("status").textContent = `${c1.label}${c1.glyph}  vs  ${c2.label}${c2.glyph}`;
+  renderPlay();
+  await sleep(state.speed);
+
+  if (c1.rank !== c2.rank) {
+    const winner = c1.rank > c2.rank ? 0 : 1;
+    award(winner, state.pot, `${state.players[winner].name} ${takes(winner)} ${label(c1)} and ${label(c2)}.`);
+  } else {
+    await resolveWar();
+  }
+
+  state.pot = [];
+  renderPot();
+  renderPlay();
+  state.busy = false;
+  document.getElementById("nextBtn").disabled = remaining(state.players[0]) === 0 && remaining(state.players[1]) === 0;
+  if (remaining(state.players[0]) === 0 && remaining(state.players[1]) === 0) {
+    await sleep(400);
+    finishGame();
+    return;
+  }
+  if (state.auto) stepBattle();
+  else document.getElementById("nextBtn").disabled = false;
+}
+
+async function resolveWar() {
+  document.getElementById("status").textContent = "WAR!";
+  logLine(`War on ${state.pot[state.pot.length - 2].label}s.`);
+  await sleep(Math.max(260, state.speed * 0.6));
+
+  const hidden = new Set();
+  const downs = [[], []];
+  for (let i = 0; i < 3; i++) {
+    const a = drawCard(state.players[0]);
+    const b = drawCard(state.players[1]);
+    if (a) {
+      hidden.add(state.pot.length);
+      state.pot.push(a);
+      downs[0].push(a);
+    }
+    if (b) {
+      hidden.add(state.pot.length);
+      state.pot.push(b);
+      downs[1].push(b);
+    }
+  }
+  renderPot({ hidden });
+  renderPlay();
+  await sleep(Math.max(280, state.speed * 0.55));
+
+  const u1 = drawCard(state.players[0]);
+  const u2 = drawCard(state.players[1]);
+
+  if (u1) state.pot.push(u1);
+  if (u2) state.pot.push(u2);
+  setBattleCards(u1, u2, false);
+  renderPot({ hidden });
+  renderPlay();
+
+  if (!u1 && !u2) {
+    // last-card tie after the original pair (and maybe some downs): each keeps their own from the original pair conceptually.
+    // Simpler clean rule used here: split the pot as evenly as possible, leftover to neither? We'll give each player back
+    // the cards they contributed if we can; fallback split.
+    splitPotOnFinalTie();
+    document.getElementById("status").textContent = "Last-card tie — each keeps their own.";
+    await sleep(state.speed);
+    return;
+  }
+  if (!u1 || !u2) {
+    const winner = u1 ? 0 : 1;
+    award(winner, state.pot, `${state.players[winner].name} wins the war — opponent had no decider.`);
+    await sleep(state.speed);
+    return;
+  }
+
+  document.getElementById("status").textContent = `War decider: ${u1.label}${u1.glyph} vs ${u2.label}${u2.glyph}`;
+  await sleep(state.speed);
+
+  if (u1.rank === u2.rank) {
+    logLine("The war continues!");
+    await resolveWar();
+    return;
+  }
+  const winner = u1.rank > u2.rank ? 0 : 1;
+  award(winner, state.pot, `${state.players[winner].name} wins the war (${state.pot.length} cards).`);
+}
+
+function splitPotOnFinalTie() {
+  // Each player keeps cards they originally owned.
+  for (const c of state.pot) {
+    state.players[c.owner].capture.push(c);
+  }
+  logLine("Final tie. Each keeps the cards they brought.");
+}
+
+function award(winner, cards, msg) {
+  state.players[winner].capture.push(...cards);
+  document.getElementById("status").textContent = msg;
+  logLine(msg);
+}
+
+function takes(i) {
+  return state.players[i].name === "You" ? "take" : "takes";
+}
+
+function label(c) { return `${c.label}${c.glyph}`; }
+
+function toggleAuto() {
+  state.auto = !state.auto;
+  document.getElementById("autoBtn").textContent = state.auto ? "Pause" : "Play all";
+  if (state.auto && !state.busy) stepBattle();
+}
+
+function finishGame() {
+  state.auto = false;
+  const a = state.players[0].capture.length;
+  const b = state.players[1].capture.length;
+  show("over");
+  const title = document.getElementById("winnerTitle");
+  const score = document.getElementById("finalScore");
+  score.textContent = `${state.players[0].name} ${a}  —  ${state.players[1].name} ${b}`;
+  if (a > b) title.textContent = `${state.players[0].name} wins`;
+  else if (b > a) title.textContent = `${state.players[1].name} wins`;
+  else title.textContent = "Drawn campaign";
+}
+
+function rematch() {
+  startGame(state.lastMode);
+}
+
+function escapeHtml(s) {
+  return String(s).replace(/[&<>"']/g, (c) => ({ "&":"&amp;","<":"&lt;",">":"&gt;","\"":"&quot;","'":"&#39;" }[c]));
+}
+</script>
+</body>
+</html>
